@@ -12,13 +12,6 @@ __pycache__/
 # Local outputs
 output/
 
-# Local certs
-https-certs/
-
-# Generated samples
-samples/report.pdf
-samples/report_page_*.png
-
 # OS
 .DS_Store
 Thumbs.db
