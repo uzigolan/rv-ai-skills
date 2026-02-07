@@ -1,0 +1,4 @@
+interface:
+  display_name: "Start Server"
+  short_description: "Start the local report server sandbox"
+  default_prompt: "Start the Flask report server in the sandbox using config.ini."

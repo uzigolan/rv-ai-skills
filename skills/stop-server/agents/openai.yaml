@@ -1,0 +1,4 @@
+interface:
+  display_name: "Stop Server"
+  short_description: "Stop the local report server sandbox"
+  default_prompt: "Stop the Flask report server running in the sandbox."

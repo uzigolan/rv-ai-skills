@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CSV Report Generator</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --ink: #1f1b16;
+      --accent: #c85a2a;
+      --card: #ffffff;
+      --muted: #6b5f54;
+    }
+    body {
+      margin: 0;
+      font-family: "Georgia", "Times New Roman", serif;
+      background: radial-gradient(circle at top left, #fff7eb, var(--bg));
+      color: var(--ink);
+    }
+    .wrap {
+      max-width: 900px;
+      margin: 60px auto;
+      padding: 24px;
+    }
+    .card {
+      background: var(--card);
+      border: 2px solid #e6d9c9;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 10px 30px rgba(31, 27, 22, 0.08);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 36px;
+      letter-spacing: 0.5px;
+    }
+    p {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.6;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    input[type="file"] {
+      display: block;
+      margin-top: 12px;
+      padding: 10px;
+      background: #fff4e8;
+      border: 1px solid #e6d9c9;
+      border-radius: 10px;
+      width: 100%;
+    }
+    .note {
+      font-size: 14px;
+      color: #8a7a6b;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>CSV Report Generator</h1>
+      <p>Upload a CSV file to generate a structured report with insights and recommendations.</p>
+      <form method="post" enctype="multipart/form-data">
+        <input type="file" name="csv_file" accept=".csv" required />
+        <div class="actions">
+          <button type="submit" formaction="/report">Generate HTML</button>
+          <button type="submit" formaction="/report/html">Download HTML</button>
+          <button type="submit" formaction="/report/pdf">Download PDF</button>
+        </div>
+      </form>
+      <div class="note">Reports are generated using configured AI services and assembled into a single HTML file.</div>
+    </div>
+  </div>
+</body>
+</html>

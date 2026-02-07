@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title }}</title>
+  <style>
+    :root {
+      --bg: #eef4fb;
+      --ink: #0f1c2e;
+      --accent: #1f6fb2;
+      --muted: #5c6b80;
+      --card: #ffffff;
+      --border: #d9e3ef;
+    }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Verdana", "Tahoma", sans-serif;
+      background: radial-gradient(circle at top, #ffffff, var(--bg));
+      color: var(--ink);
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 40px auto 80px;
+      padding: 24px;
+    }
+    .hero {
+      background: linear-gradient(120deg, #ffffff 10%, #f2f7fd 90%);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 16px 32px rgba(15, 28, 46, 0.08);
+      margin-bottom: 20px;
+    }
+    .kicker {
+      font-size: 14px;
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .hero-badge {
+      width: 96px;
+      height: 96px;
+      border-radius: 24px;
+      background: linear-gradient(160deg, #2f6ea6, #5aa0df);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    h1 {
+      font-size: 32px;
+      margin: 6px 0;
+    }
+    .meta {
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .subhead {
+      color: var(--muted);
+      margin: 0;
+      font-size: 16px;
+    }
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 26px;
+      margin-bottom: 18px;
+      box-shadow: 0 10px 24px rgba(31, 27, 22, 0.06);
+    }
+    .section h2 {
+      margin-top: 0;
+      font-size: 22px;
+      color: var(--accent);
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+    }
+    .summary-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: #fffaf4;
+    }
+    .summary-card span {
+      display: block;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .dataframe {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .dataframe th,
+    .dataframe td {
+      border-bottom: 1px solid var(--border);
+      padding: 8px 10px;
+      text-align: left;
+    }
+    .dataframe th {
+      background: #f1f5fb;
+    }
+    .columns {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    .column-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #fffdf9;
+      font-size: 14px;
+    }
+    .insights-wrap {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(120deg, #f9fcff, #ffffff);
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .insights-wrap::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+      background: linear-gradient(180deg, #1f6fb2, #78b5e8);
+    }
+    .insights-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      color: #0d4c82;
+      font-weight: 700;
+    }
+    .insights-pill {
+      background: #e6f1ff;
+      color: #1f6fb2;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .insights {
+      white-space: pre-line;
+      line-height: 1.7;
+      color: #223247;
+      font-size: 15px;
+    }
+    .insights-list {
+      display: grid;
+      gap: 14px;
+      margin-top: 10px;
+    }
+    .insight-block {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: 0 8px 16px rgba(15, 28, 46, 0.06);
+    }
+    .insight-block h4 {
+      margin: 0 0 6px;
+      color: #1f6fb2;
+      font-size: 16px;
+    }
+    .insight-block p {
+      margin: 0;
+      color: #223247;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+    .section-title {
+      font-size: 26px;
+      margin: 0 0 6px;
+      color: #1c2a3d;
+    }
+    .section-subtitle {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+    .chart-card {
+      background: #ffffff;
+      border: 1px solid #e3ebf4;
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 12px 22px rgba(15, 28, 46, 0.08);
+    }
+    .chart-title {
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #1d2a3a;
+      text-align: center;
+    }
+    .chart-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .insight-card {
+      background: #f6f9fe;
+      border: 1px solid #e3ebf4;
+      border-radius: 14px;
+      padding: 18px;
+      display: grid;
+      gap: 18px;
+    }
+    .insight-row {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+    .icon-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #2f6ea6;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    .insight-title {
+      font-weight: 600;
+    }
+    .insight-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0d4c82;
+    }
+    .insight-note {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .callout {
+      margin-top: 14px;
+      background: linear-gradient(120deg, #e8f2ff, #f2f7fd);
+      border-left: 6px solid #2f6ea6;
+      padding: 12px 16px;
+      border-radius: 10px;
+      color: #1d2a3a;
+      box-shadow: 0 8px 18px rgba(15, 28, 46, 0.08);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>{{ title }}</h1>
+    <div class="meta">Generated {{ generated_at }}</div>
+
+    <div class="hero">
+      <div>
+        <div class="kicker">Overview &amp; Background</div>
+        <h1>{{ title }}</h1>
+        <p class="subhead">Queues statistics report for packet discard and throughput behavior.</p>
+      </div>
+      <div class="hero-badge">Queues</div>
+    </div>
+
+    <div class="section">
+      <h2>Dataset Summary</h2>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <strong>{{ summary.row_count }}</strong>
+          <span>Rows</span>
+        </div>
+        <div class="summary-card">
+          <strong>{{ summary.column_count }}</strong>
+          <span>Columns</span>
+        </div>
+      </div>
+      <div class="columns">
+        {% for col in summary.columns %}
+        <div class="column-item">
+          <strong>{{ col.name }}</strong><br />
+          Type: {{ col.dtype }}<br />
+          Missing: {{ col.missing }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if report_type == "queues_statistics" %}
+    <div class="section">
+      <h2>Queues Statistics</h2>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <strong>{{ queue_stats.unique.ne_name }}</strong>
+          <span>NE Names</span>
+        </div>
+        <div class="summary-card">
+          <strong>{{ queue_stats.unique.resource_name }}</strong>
+          <span>Resources</span>
+        </div>
+        <div class="summary-card">
+          <strong>{{ queue_stats.unique.queue_block }}</strong>
+          <span>Queue Blocks</span>
+        </div>
+        <div class="summary-card">
+          <strong>{{ queue_stats.unique.queue_number }}</strong>
+          <span>Queue Numbers</span>
+        </div>
+      </div>
+      <p class="meta">
+        Time range: {{ queue_stats.time_range.start }} to {{ queue_stats.time_range.end }}
+      </p>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <strong>{{ queue_stats.totals.dequeued_bytes }}</strong>
+          <span>Dequeued Bytes</span>
+        </div>
+        <div class="summary-card">
+          <strong>{{ queue_stats.totals.dropped_bytes }}</strong>
+          <span>Dropped Bytes</span>
+        </div>
+        <div class="summary-card">
+          <strong>{{ "%.2f"|format(queue_stats.drop_rates.bytes * 100) }}%</strong>
+          <span>Drop Rate (Bytes)</span>
+        </div>
+        <div class="summary-card">
+          <strong>{{ "%.2f"|format(queue_stats.drop_rates.frames * 100) }}%</strong>
+          <span>Drop Rate (Frames)</span>
+        </div>
+      </div>
+      <h3>Top Dropped (Bytes)</h3>
+      <table class="dataframe">
+        <thead>
+          <tr>
+            <th>NE</th>
+            <th>Resource</th>
+            <th>Queue Block</th>
+            <th>Queue Number</th>
+            <th>Dropped Bytes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in queue_stats.top_dropped_bytes %}
+          <tr>
+            <td>{{ item["NE Name"] }}</td>
+            <td>{{ item["Resource Name"] }}</td>
+            <td>{{ item["Queue Block"] }}</td>
+            <td>{{ item["Queue Number"] }}</td>
+            <td>{{ item["Dropped (Bytes)"] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <h3>Top Dropped (Frames)</h3>
+      <table class="dataframe">
+        <thead>
+          <tr>
+            <th>NE</th>
+            <th>Resource</th>
+            <th>Queue Block</th>
+            <th>Queue Number</th>
+            <th>Dropped Frames</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in queue_stats.top_dropped_frames %}
+          <tr>
+            <td>{{ item["NE Name"] }}</td>
+            <td>{{ item["Resource Name"] }}</td>
+            <td>{{ item["Queue Block"] }}</td>
+            <td>{{ item["Queue Number"] }}</td>
+            <td>{{ item["Dropped (Frames)"] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <h3>Abnormal Queues</h3>
+      <table class="dataframe">
+        <thead>
+          <tr>
+            <th>NE</th>
+            <th>Resource</th>
+            <th>Queue Block</th>
+            <th>Queue Number</th>
+            <th>Drop Rate (Bytes)</th>
+            <th>Drop Rate (Frames)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in queue_stats.abnormal_queues %}
+          <tr>
+            <td>{{ item["NE Name"] }}</td>
+            <td>{{ item["Resource Name"] }}</td>
+            <td>{{ item["Queue Block"] }}</td>
+            <td>{{ item["Queue Number"] }}</td>
+            <td>{{ "%.2f"|format(item["drop_rate_bytes"] * 100) }}%</td>
+            <td>{{ "%.2f"|format(item["drop_rate_frames"] * 100) }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Key Insights from Overall Discards</div>
+      <div class="section-subtitle">Analyze significant discard patterns and identify critical metrics.</div>
+      <div class="split">
+        <div class="chart-card">
+          <div class="chart-title">Discard Rate Trend Over Measurement Window</div>
+          <svg width="100%" height="240" viewBox="0 0 560 240">
+            <rect x="0" y="0" width="560" height="240" rx="14" fill="#ffffff" stroke="#e1e8f1"/>
+            <line x1="30" y1="210" x2="550" y2="210" stroke="#d8e0ea" />
+            <line x1="30" y1="40" x2="550" y2="40" stroke="#eef2f6" />
+            <polyline points="{{ queue_stats.trend.points }}" fill="none" stroke="#2f6ea6" stroke-width="3" />
+          </svg>
+          <div class="chart-labels">
+            {% for item in queue_stats.trend.labels %}
+              {% if loop.index0 % 4 == 0 %}
+              <span>{{ item.time_label }}</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-row">
+            <div class="icon-circle">!</div>
+            <div>
+              <div class="insight-title">Peak Discard Rate</div>
+              <div class="insight-value">{{ "%.2f"|format(queue_stats.trend.peak.rate_pct) }}%</div>
+              <div class="insight-note">Peak observed at {{ queue_stats.trend.peak.time_label }}.</div>
+            </div>
+          </div>
+          <div class="insight-row">
+            <div class="icon-circle">⌁</div>
+            <div>
+              <div class="insight-title">Total Dropped Frames</div>
+              <div class="insight-value">{{ queue_stats.trend.total_dropped_frames }}</div>
+              <div class="insight-note">Aggregate across measurement window.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="callout">
+        This section highlights discard patterns over time and identifies peak loss windows for deeper investigation.
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="section">
+      <h2>OpenAI Insights</h2>
+      <div class="insights-wrap">
+        <div class="insights-header">
+          <span class="insights-pill">AI Analysis</span>
+          <span>Abnormal behavior, outliers, and operational implications</span>
+        </div>
+        <div class="insights-list">
+          {% for section in openai_insights_sections %}
+          <div class="insight-block">
+            <h4>{{ section.title }}</h4>
+            <p>{{ section.content }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Secondary AI Sections</h2>
+      {% for section in secondary_sections %}
+        <h3>{{ section.title }}</h3>
+        <p>{{ section.content }}</p>
+      {% endfor %}
+    </div>
+
+    <div class="section">
+      <h2>Preview</h2>
+      {{ preview_html | safe }}
+    </div>
+  </div>
+</body>
+</html>
