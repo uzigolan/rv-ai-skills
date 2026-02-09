@@ -310,6 +310,12 @@ def create_app(config: AppConfig) -> Flask:
             request.form.get("report_type"),
             request.form.get("override_name"),
         )
+        missing = _missing_provider_keys(config)
+        if missing:
+            return Response(
+                f"Missing API keys for enabled providers: {', '.join(missing)}.",
+                status=400,
+            )
         if report_config.report_mode.lower() != "local":
             return Response("Report mode not implemented. Set report_mode=local.", status=400)
         file = request.files.get("csv_file")
@@ -388,6 +394,12 @@ def create_app(config: AppConfig) -> Flask:
             request.form.get("report_type"),
             request.form.get("override_name"),
         )
+        missing = _missing_provider_keys(config)
+        if missing:
+            return Response(
+                f"Missing API keys for enabled providers: {', '.join(missing)}.",
+                status=400,
+            )
         if report_config.report_mode.lower() != "local":
             return Response("Report mode not implemented. Set report_mode=local.", status=400)
         file = request.files.get("csv_file")
@@ -473,6 +485,12 @@ def create_app(config: AppConfig) -> Flask:
             request.form.get("report_type"),
             request.form.get("override_name"),
         )
+        missing = _missing_provider_keys(config)
+        if missing:
+            return Response(
+                f"Missing API keys for enabled providers: {', '.join(missing)}.",
+                status=400,
+            )
         if report_config.report_mode.lower() != "local":
             return Response("Report mode not implemented. Set report_mode=local.", status=400)
         file = request.files.get("csv_file")
@@ -720,6 +738,19 @@ def _get_report_config(
         if override_data:
             report_config = apply_override(report_config, override_data)
     return report_config
+
+
+def _missing_provider_keys(config: AppConfig) -> list[str]:
+    missing: list[str] = []
+    if config.ai_sections.openai.enabled and not config.ai_sections.openai.api_key:
+        missing.append("OpenAI")
+    if config.ai_sections.grok.enabled and not config.ai_sections.grok.api_key:
+        missing.append("Grok")
+    if config.ai_sections.claude.enabled and not config.ai_sections.claude.api_key:
+        missing.append("Claude")
+    if config.ai_sections.gemini.enabled and not config.ai_sections.gemini.api_key:
+        missing.append("Gemini")
+    return missing
 
 
 if __name__ == "__main__":
