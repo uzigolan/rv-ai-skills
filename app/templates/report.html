@@ -7,17 +7,20 @@
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
   <style>
     :root {
-      --bg: #eef4fb;
-      --ink: #0f1c2e;
-      --accent: #1f6fb2;
-      --muted: #5c6b80;
+      --bg: #f2f5fb;
+      --ink: #0e1726;
+      --accent: #3a6ee8;
+      --muted: #5a6472;
       --card: #ffffff;
-      --border: #d9e3ef;
+      --border: #e2e8f0;
     }
     body {
       margin: 0;
-      font-family: "Trebuchet MS", "Verdana", "Tahoma", sans-serif;
-      background: radial-gradient(circle at top, #ffffff, var(--bg));
+      font-family: "Avenir Next", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, #ffffff, transparent 40%),
+        radial-gradient(circle at 90% 0%, #dbeafe, transparent 40%),
+        linear-gradient(180deg, #f7f8fc, var(--bg));
       color: var(--ink);
     }
     .wrap {
@@ -26,14 +29,14 @@
       padding: 24px;
     }
     .hero {
-      background: linear-gradient(120deg, #ffffff 10%, #f2f7fd 90%);
+      background: linear-gradient(120deg, #ffffff 10%, #eef4ff 90%);
       border: 1px solid var(--border);
       border-radius: 22px;
       padding: 28px 32px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 16px 32px rgba(15, 28, 46, 0.08);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
       margin-bottom: 20px;
     }
     .kicker {
@@ -47,7 +50,7 @@
       width: 96px;
       height: 96px;
       border-radius: 24px;
-      background: linear-gradient(160deg, #2f6ea6, #5aa0df);
+      background: linear-gradient(160deg, #3a6ee8, #7c3aed);
       color: #fff;
       display: flex;
       align-items: center;
@@ -96,6 +99,21 @@
     .summary-card span {
       display: block;
       font-size: 14px;
+      color: var(--muted);
+    }
+    .cost-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .cost-table th,
+    .cost-table td {
+      border-bottom: 1px solid var(--border);
+      padding: 8px 10px;
+      text-align: left;
+    }
+    .cost-note {
+      font-size: 12px;
       color: var(--muted);
     }
     .dataframe {
@@ -187,6 +205,25 @@
       font-size: 14px;
       line-height: 1.6;
     }
+    .insight-block ul,
+    .insight-block ol {
+      margin: 6px 0 0 18px;
+      padding: 0;
+      color: #223247;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .insight-block li {
+      margin: 4px 0;
+    }
+    .insight-spacer {
+      height: 6px;
+    }
+    .insights-stack {
+      display: grid;
+      gap: 12px;
+      margin-top: 8px;
+    }
     .split {
       display: grid;
       grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
@@ -273,44 +310,89 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>{{ title }}</h1>
-    <div class="meta">Generated {{ generated_at }}</div>
+    <h1>{{ report_title }}</h1>
+    <div class="meta">Version {{ report_version }} · Generated {{ generated_at }} from data file {{ data_file_name }}</div>
 
     <div class="hero">
       <div>
         <div class="kicker">Overview &amp; Background</div>
-        <h1>{{ title }}</h1>
-        <p class="subhead">Queues statistics report for packet discard and throughput behavior.</p>
+        <h1>{{ report_title }}</h1>
+        {% if report_description %}
+        <p class="subhead">{{ report_description }}</p>
+        {% endif %}
+        <p class="subhead">{{ overview_text }}</p>
       </div>
-      <div class="hero-badge">Queues</div>
+      <div class="hero-badge">{{ report_title }}</div>
     </div>
 
     <div class="section">
-      <h2>Dataset Summary</h2>
-      <div class="summary-grid">
-        <div class="summary-card">
-          <strong>{{ summary.row_count }}</strong>
-          <span>Rows</span>
+      <h2>Executive Summary</h2>
+      <div class="callout">{{ queue_stats.conclusion }}</div>
+    </div>
+
+    <div class="section">
+      <h2>Key Insights</h2>
+      <div class="insights-wrap">
+        <div class="insights-header">
+          <span class="insights-pill">Insights</span>
         </div>
-        <div class="summary-card">
-          <strong>{{ summary.column_count }}</strong>
-          <span>Columns</span>
+        <div class="insights-stack">
+          {% for section in openai_insights_sections %}
+          <div class="insight-block">
+            <h4>{{ section.title }}</h4>
+            <div class="insight-content">{{ section.content_html | safe }}</div>
+          </div>
+          {% endfor %}
         </div>
       </div>
+    </div>
+
+    <div class="section">
+      <h2>Provider Status</h2>
       <div class="columns">
-        {% for col in summary.columns %}
-        <div class="column-item">
-          <strong>{{ col.name }}</strong><br />
-          Type: {{ col.dtype }}<br />
-          Missing: {{ col.missing }}
-        </div>
+        {% for name, state in provider_status.items() %}
+        <div class="column-item">{{ name }}: {{ state }}</div>
         {% endfor %}
       </div>
     </div>
 
-    {% if report_type == "queues_statistics" %}
+    {% if cost_estimates %}
     <div class="section">
-      <h2>Queues Statistics</h2>
+      <h2>Estimated AI Cost</h2>
+      <table class="cost-table">
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Model</th>
+            <th>Input Tokens</th>
+            <th>Output Tokens</th>
+            <th>Input $/1M</th>
+            <th>Output $/1M</th>
+            <th>Estimated Cost</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in cost_estimates %}
+          <tr>
+            <td>{{ item.provider }}</td>
+            <td>{{ item.model }}</td>
+            <td>{{ item.input_tokens }}</td>
+            <td>{{ item.output_tokens }}</td>
+            <td>{{ item.input_per_1m }}</td>
+            <td>{{ item.output_per_1m }}</td>
+            <td>{{ item.estimated_cost }}</td>
+            <td>{{ item.note or "" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="cost-note">Estimates use configured per‑token rates and approximate token counts.</div>
+    </div>
+    {% endif %}
+
+    <div class="section">
+      <h2>Queue Statistics</h2>
       <div class="summary-grid">
         <div class="summary-card">
           <strong>{{ queue_stats.unique.ne_name }}</strong>
@@ -424,8 +506,8 @@
     </div>
 
     <div class="section">
-      <div class="section-title">Key Insights from Overall Discards</div>
-      <div class="section-subtitle">Analyze significant discard patterns and identify critical metrics.</div>
+      <h2>Trend Analysis</h2>
+      <div class="section-subtitle">Discard rate trends over the measurement window.</div>
       <div class="split">
         <div class="chart-card">
           <div class="chart-title">Discard Rate Trend Over Measurement Window</div>
@@ -466,36 +548,162 @@
         This section highlights discard patterns over time and identifies peak loss windows for deeper investigation.
       </div>
     </div>
+
+    {% if queue_stats.percentiles or queue_stats.outliers or queue_stats.correlations or queue_stats.anomalies or queue_stats.per_queue_trends %}
+    <div class="section">
+      <h2>Local Analysis</h2>
+      {% if queue_stats.percentiles %}
+      <h3>Percentiles</h3>
+      <div class="columns">
+        {% for key, vals in queue_stats.percentiles.items() %}
+        <div class="column-item">
+          <strong>{{ key }}</strong><br />
+          p50: {{ "%.2f"|format(vals.p50) }}<br />
+          p90: {{ "%.2f"|format(vals.p90) }}<br />
+          p95: {{ "%.2f"|format(vals.p95) }}<br />
+          p99: {{ "%.2f"|format(vals.p99) }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if queue_stats.correlations %}
+      <h3>Correlations</h3>
+      <div class="columns">
+        <div class="column-item">
+          <strong>Bytes</strong><br />
+          Corr(Dequeued, Dropped): {{ "%.3f"|format(queue_stats.correlations.bytes) }}
+        </div>
+        <div class="column-item">
+          <strong>Frames</strong><br />
+          Corr(Dequeued, Dropped): {{ "%.3f"|format(queue_stats.correlations.frames) }}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if queue_stats.outliers %}
+      <h3>Outliers</h3>
+      {% for metric, rows in queue_stats.outliers.items() %}
+        <h4>{{ metric }}</h4>
+        <table class="dataframe">
+          <thead>
+            <tr>
+              <th>NE</th>
+              <th>Resource</th>
+              <th>Queue Block</th>
+              <th>Queue Number</th>
+              <th>Time</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+            <tr>
+              <td>{{ row["NE Name"] }}</td>
+              <td>{{ row["Resource Name"] }}</td>
+              <td>{{ row["Queue Block"] }}</td>
+              <td>{{ row["Queue Number"] }}</td>
+              <td>{{ row["Time"] }}</td>
+              <td>{{ row[metric] }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endfor %}
+      {% endif %}
+
+      {% if queue_stats.anomalies %}
+      <h3>Anomaly Flags</h3>
+      <table class="dataframe">
+        <thead>
+          <tr>
+            <th>NE</th>
+            <th>Resource</th>
+            <th>Queue Block</th>
+            <th>Queue Number</th>
+            <th>Drop Rate</th>
+            <th>Severity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in queue_stats.anomalies %}
+          <tr>
+            <td>{{ row["NE Name"] }}</td>
+            <td>{{ row["Resource Name"] }}</td>
+            <td>{{ row["Queue Block"] }}</td>
+            <td>{{ row["Queue Number"] }}</td>
+            <td>{{ "%.2f"|format(row["drop_rate"] * 100) }}%</td>
+            <td>{{ row["severity"] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      {% if queue_stats.per_queue_trends %}
+      <h3>Per-Queue Time Series</h3>
+      {% for label, points in queue_stats.per_queue_trends.items() %}
+      <div class="chart-card" style="margin-bottom: 14px;">
+        <div class="chart-title">{{ label }}</div>
+        <svg width="100%" height="200" viewBox="0 0 560 200">
+          <rect x="0" y="0" width="560" height="200" rx="14" fill="#ffffff" stroke="#e1e8f1"/>
+          <line x1="30" y1="170" x2="550" y2="170" stroke="#d8e0ea" />
+          <line x1="30" y1="30" x2="550" y2="30" stroke="#eef2f6" />
+          <polyline points="{{ points }}" fill="none" stroke="#2f6ea6" stroke-width="3" />
+        </svg>
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
     {% endif %}
 
     <div class="section">
-      <h2>OpenAI Insights</h2>
-      <div class="insights-wrap">
-        <div class="insights-header">
-          <span class="insights-pill">AI Analysis</span>
-          <span>Abnormal behavior, outliers, and operational implications</span>
+      <h2>Operational Implications</h2>
+      <div class="callout">{{ queue_stats.conclusion }}</div>
+    </div>
+
+    {% if queue_stats.recommendations %}
+    <div class="section">
+      <h2>Recommendations</h2>
+      <ul>
+        {% for item in queue_stats.recommendations %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="section">
+      <h2>Conclusion</h2>
+      <div class="callout">{{ queue_stats.conclusion }}</div>
+    </div>
+
+    <div class="section">
+      <h2>Appendix</h2>
+      <h3>Dataset Summary</h3>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <strong>{{ summary.row_count }}</strong>
+          <span>Rows</span>
         </div>
-        <div class="insights-list">
-          {% for section in openai_insights_sections %}
-          <div class="insight-block">
-            <h4>{{ section.title }}</h4>
-            <p>{{ section.content }}</p>
-          </div>
-          {% endfor %}
+        <div class="summary-card">
+          <strong>{{ summary.column_count }}</strong>
+          <span>Columns</span>
         </div>
+      </div>
+      <div class="columns">
+        {% for col in summary.columns %}
+        <div class="column-item">
+          <strong>{{ col.name }}</strong><br />
+          Type: {{ col.dtype }}<br />
+          Missing: {{ col.missing }}
+        </div>
+        {% endfor %}
       </div>
     </div>
 
     <div class="section">
-      <h2>Secondary AI Sections</h2>
-      {% for section in secondary_sections %}
-        <h3>{{ section.title }}</h3>
-        <p>{{ section.content }}</p>
-      {% endfor %}
-    </div>
-
-    <div class="section">
-      <h2>Preview</h2>
+      <h2>Data Preview</h2>
       {{ preview_html | safe }}
     </div>
   </div>

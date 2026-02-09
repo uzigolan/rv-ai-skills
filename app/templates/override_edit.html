@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Override Edit</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #f2f5fb;
+      --ink: #0e1726;
+      --accent: #3a6ee8;
+      --accent-2: #7c3aed;
+      --card: #ffffff;
+      --muted: #5a6472;
+      --line: #e2e8f0;
+    }
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, #ffffff, transparent 40%),
+        radial-gradient(circle at 90% 0%, #dbeafe, transparent 40%),
+        linear-gradient(180deg, #f7f8fc, var(--bg));
+      color: var(--ink);
+    }
+    .wrap {
+      max-width: 1000px;
+      margin: 56px auto;
+      padding: 24px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 14px;
+      color: var(--ink);
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(58, 110, 232, 0.15);
+    }
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    button {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 15px;
+      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.25);
+      transition: transform 0.2s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .status {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #2e6f4e;
+    }
+    a.link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div style="display:flex; justify-content: space-between; align-items: center; gap: 12px;">
+        <div>
+          <h1>Edit Override</h1>
+          <div style="color: var(--muted); font-size: 13px;">{{ override_name or "New Override" }}</div>
+        </div>
+        <div>
+          <a class="link" href="/customize">Back to Overrides</a>
+        </div>
+      </div>
+
+      <form id="edit-form" method="post">
+        <input type="hidden" name="report_type" id="custom_report_type" value="{{ selected_report }}" />
+        <div class="field">
+          <label for="report_type_display">Report Type</label>
+          <input id="report_type_display" type="text" value="{{ selected_report }}" readonly />
+        </div>
+        <div class="field">
+          <label for="override_name_input">Override Name</label>
+          <input id="override_name_input" type="text" name="override_name" value="{{ override_name or '' }}" required />
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="name_input">Report Name</label>
+            <input id="name_input" type="text" name="name" value="{{ data.name }}" />
+          </div>
+          <div class="field">
+            <label for="version_input">Version</label>
+            <input id="version_input" type="text" name="version" value="{{ data.version }}" />
+          </div>
+          <div class="field">
+            <label for="pdf_engine_input">PDF Engine</label>
+            <input id="pdf_engine_input" type="text" name="pdf_engine" value="{{ data.pdf_engine }}" />
+          </div>
+          <div class="field">
+            <label for="report_mode_input">Report Mode</label>
+            <input id="report_mode_input" type="text" name="report_mode" value="{{ data.report_mode }}" />
+          </div>
+          <div class="field">
+            <label for="sample_rows_input">Sample Rows</label>
+            <input id="sample_rows_input" type="number" name="sample_rows" min="1" step="1" value="{{ data.sample_rows }}" />
+          </div>
+          <div class="field">
+            <label for="preview_rows_input">Preview Rows</label>
+            <input id="preview_rows_input" type="number" name="preview_rows" min="1" step="1" value="{{ data.preview_rows }}" />
+          </div>
+          <div class="field">
+            <label for="delimiter_input">Delimiter</label>
+            <input id="delimiter_input" type="text" name="delimiter" value="{{ data.delimiter }}" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="overview_input">Overview Text</label>
+          <input id="overview_input" type="text" name="overview_text" value="{{ data.overview_text }}" />
+        </div>
+        <div class="field">
+          <label for="description_input">Description</label>
+          <input id="description_input" type="text" name="description" value="{{ data.description }}" />
+        </div>
+        <div class="field">
+          <label for="prompt_input">Prompt</label>
+          <textarea id="prompt_input" name="prompt">{{ data.prompt }}</textarea>
+        </div>
+        <div class="actions">
+          <button type="submit">Save Changes</button>
+        </div>
+        <div id="status" class="status"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("edit-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const statusEl = document.getElementById("status");
+      statusEl.textContent = "";
+      const formData = new FormData(event.target);
+      const response = await fetch("/report/customize", {
+        method: "POST",
+        body: formData
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        statusEl.textContent = `Save failed: ${text}`;
+        statusEl.style.color = "#9e2a2b";
+        return;
+      }
+      window.location.href = "/customize";
+    });
+  </script>
+</body>
+</html>

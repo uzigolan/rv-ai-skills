@@ -10,7 +10,11 @@ class CsvParseError(Exception):
     pass
 
 
-def parse_csv(file_bytes: bytes) -> tuple[pd.DataFrame, dict[str, Any], list[dict[str, Any]], str]:
+def parse_csv(
+    file_bytes: bytes,
+    sample_rows: int = 5,
+    preview_rows: int = 20,
+) -> tuple[pd.DataFrame, dict[str, Any], list[dict[str, Any]], str]:
     try:
         buffer = BytesIO(file_bytes)
         df = pd.read_csv(buffer)
@@ -36,7 +40,7 @@ def parse_csv(file_bytes: bytes) -> tuple[pd.DataFrame, dict[str, Any], list[dic
     describe = df.describe(include="all").fillna("")
     summary["describe"] = describe.to_dict()
 
-    sample_rows = df.head(5).to_dict(orient="records")
-    preview_html = df.head(20).to_html(index=False, classes="dataframe", border=0)
+    sample_rows_data = df.head(sample_rows).to_dict(orient="records")
+    preview_html = df.head(preview_rows).to_html(index=False, classes="dataframe", border=0)
 
-    return df, summary, sample_rows, preview_html
+    return df, summary, sample_rows_data, preview_html

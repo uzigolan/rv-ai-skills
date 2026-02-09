@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Estimated Report Costs</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #f2f5fb;
+      --ink: #0e1726;
+      --accent: #3a6ee8;
+      --accent-2: #7c3aed;
+      --card: #ffffff;
+      --muted: #5a6472;
+      --line: #e2e8f0;
+    }
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, #ffffff, transparent 40%),
+        radial-gradient(circle at 90% 0%, #dbeafe, transparent 40%),
+        linear-gradient(180deg, #f7f8fc, var(--bg));
+      color: var(--ink);
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 56px auto;
+      padding: 24px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+    }
+    .muted {
+      color: #8a94a6;
+      font-size: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 14px;
+    }
+    th, td {
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      padding: 8px 10px;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 600;
+    }
+    a.link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div style="display:flex; justify-content: space-between; align-items:center; gap:12px;">
+        <div>
+          <h1>Estimated Report Costs</h1>
+          <div class="muted">{{ report_title }} ({{ report_type }})</div>
+        </div>
+        <div>
+          <a class="link" href="/">Back to Report Generator</a>
+        </div>
+      </div>
+
+      {% if cost_estimates %}
+      <table>
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Model</th>
+            <th>Input Tokens</th>
+            <th>Output Tokens</th>
+            <th>Input $/1M</th>
+            <th>Output $/1M</th>
+            <th>Estimated Cost</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in cost_estimates %}
+          <tr>
+            <td>{{ item.provider }}</td>
+            <td>{{ item.model }}</td>
+            <td>{{ item.input_tokens }}</td>
+            <td>{{ item.output_tokens }}</td>
+            <td>{{ item.input_per_1m }}</td>
+            <td>{{ item.output_per_1m }}</td>
+            <td>{{ item.estimated_cost }}</td>
+            <td>{{ item.note or "" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="muted" style="margin-top: 12px;">No enabled AI providers or pricing available.</div>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

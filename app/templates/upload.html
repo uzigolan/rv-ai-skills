@@ -7,39 +7,45 @@
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
   <style>
     :root {
-      --bg: #f4f1ea;
-      --ink: #1f1b16;
-      --accent: #c85a2a;
+      --bg: #f2f5fb;
+      --ink: #0e1726;
+      --accent: #3a6ee8;
+      --accent-2: #7c3aed;
       --card: #ffffff;
-      --muted: #6b5f54;
+      --muted: #5a6472;
+      --line: #e2e8f0;
     }
     body {
       margin: 0;
-      font-family: "Georgia", "Times New Roman", serif;
-      background: radial-gradient(circle at top left, #fff7eb, var(--bg));
+      font-family: "Avenir Next", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, #ffffff, transparent 40%),
+        radial-gradient(circle at 90% 0%, #dbeafe, transparent 40%),
+        linear-gradient(180deg, #f7f8fc, var(--bg));
       color: var(--ink);
     }
     .wrap {
-      max-width: 900px;
-      margin: 60px auto;
+      max-width: 980px;
+      margin: 56px auto;
       padding: 24px;
     }
     .card {
       background: var(--card);
-      border: 2px solid #e6d9c9;
-      border-radius: 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
       padding: 28px;
-      box-shadow: 0 10px 30px rgba(31, 27, 22, 0.08);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
     }
     h1 {
-      margin-top: 0;
-      font-size: 36px;
-      letter-spacing: 0.5px;
+      margin: 0 0 8px;
+      font-size: 34px;
+      letter-spacing: 0.2px;
     }
     p {
       color: var(--muted);
-      font-size: 17px;
+      font-size: 16px;
       line-height: 1.6;
+      margin: 0 0 14px;
     }
     .actions {
       display: flex;
@@ -47,28 +53,77 @@
       margin-top: 16px;
       flex-wrap: wrap;
     }
+    .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    label {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.2px;
+    }
     button {
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
       color: #fff;
       border: none;
       padding: 12px 18px;
-      border-radius: 10px;
-      font-size: 16px;
+      border-radius: 12px;
+      font-size: 15px;
       cursor: pointer;
+      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.25);
+      transition: transform 0.2s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
     }
     input[type="file"] {
       display: block;
       margin-top: 12px;
-      padding: 10px;
-      background: #fff4e8;
-      border: 1px solid #e6d9c9;
-      border-radius: 10px;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 12px;
       width: 100%;
     }
-    .note {
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
       font-size: 14px;
-      color: #8a7a6b;
+      color: var(--ink);
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(58, 110, 232, 0.15);
+    }
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+    .note {
+      font-size: 13px;
+      color: var(--muted);
       margin-top: 10px;
+    }
+    .muted {
+      color: #8a94a6;
+      font-size: 12px;
     }
   </style>
 </head>
@@ -77,16 +132,90 @@
     <div class="card">
       <h1>CSV Report Generator</h1>
       <p>Upload a CSV file to generate a structured report with insights and recommendations.</p>
-      <form method="post" enctype="multipart/form-data">
+      <div class="actions" style="margin-bottom: 12px;">
+        <a href="/customize" style="text-decoration: none;">
+          <button type="button">Go to Customize</button>
+        </a>
+        <a href="/providers" style="text-decoration: none;">
+          <button type="button">Providers</button>
+        </a>
+        <a href="/report-types" style="text-decoration: none;">
+          <button type="button">Report Types</button>
+        </a>
+      </div>
+      <form id="report-form" method="post" enctype="multipart/form-data">
+        {% if report_types %}
+        <div class="row">
+          <div class="field">
+            <label for="report_type">Report Type</label>
+            <select id="report_type" name="report_type">
+              {% for report in report_types %}
+              <option value="{{ report.key }}" {% if report.key == selected_report %}selected{% endif %}>{{ report.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label for="existing_override">Use Existing Override</label>
+            <select id="existing_override" name="existing_override">
+              <option value="">None (use config/defaults)</option>
+            </select>
+          </div>
+        </div>
+        {% endif %}
+        <input type="hidden" name="override_name" id="override_name" value="" />
         <input type="file" name="csv_file" accept=".csv" required />
         <div class="actions">
-          <button type="submit" formaction="/report">Generate HTML</button>
+          <button type="submit" formaction="/report">Show Report</button>
           <button type="submit" formaction="/report/html">Download HTML</button>
           <button type="submit" formaction="/report/pdf">Download PDF</button>
+          <button type="submit" formaction="/report/costs">Estimate Report Costs</button>
         </div>
       </form>
       <div class="note">Reports are generated using configured AI services and assembled into a single HTML file.</div>
     </div>
   </div>
+
+  <script>
+    const reportTypeSelect = document.getElementById("report_type");
+    const overrideInput = document.getElementById("override_name");
+    const existingOverrideSelect = document.getElementById("existing_override");
+
+    async function loadOverrides(reportTypeKey) {
+      if (!existingOverrideSelect) return;
+      existingOverrideSelect.innerHTML = "<option value=\"\">None (use config/defaults)</option>";
+      const response = await fetch(`/report/overrides?report_type=${encodeURIComponent(reportTypeKey)}`);
+      if (!response.ok) return;
+      const data = await response.json();
+      if (!data || !data.overrides) return;
+      data.overrides.forEach((item) => {
+        const option = document.createElement("option");
+        option.value = item.override_name;
+        option.textContent = item.override_name;
+        existingOverrideSelect.appendChild(option);
+      });
+    }
+
+    if (reportTypeSelect) {
+      loadOverrides(reportTypeSelect.value);
+      reportTypeSelect.addEventListener("change", async () => {
+        overrideInput.value = "";
+        if (existingOverrideSelect) {
+          existingOverrideSelect.value = "";
+        }
+        await loadOverrides(reportTypeSelect.value);
+      });
+    }
+
+    if (existingOverrideSelect) {
+      existingOverrideSelect.addEventListener("change", async () => {
+        const selected = existingOverrideSelect.value;
+        if (!selected) {
+          overrideInput.value = "";
+          return;
+        }
+        overrideInput.value = selected;
+      });
+    }
+  </script>
 </body>
 </html>

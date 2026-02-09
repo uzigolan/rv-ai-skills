@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Overrides</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #f2f5fb;
+      --ink: #0e1726;
+      --accent: #3a6ee8;
+      --accent-2: #7c3aed;
+      --card: #ffffff;
+      --muted: #5a6472;
+      --line: #e2e8f0;
+    }
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, #ffffff, transparent 40%),
+        radial-gradient(circle at 90% 0%, #dbeafe, transparent 40%),
+        linear-gradient(180deg, #f7f8fc, var(--bg));
+      color: var(--ink);
+    }
+    .wrap {
+      max-width: 1200px;
+      margin: 56px auto;
+      padding: 24px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 30px;
+      letter-spacing: 0.3px;
+    }
+    p {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+    label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 14px;
+      color: var(--ink);
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(58, 110, 232, 0.15);
+    }
+    button {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.25);
+      transition: transform 0.2s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+    }
+    button.ghost {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      box-shadow: none;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 18px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      padding: 8px 10px;
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .ellipsis {
+      max-width: 260px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .status {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #2e6f4e;
+    }
+    a.link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .muted {
+      color: #8a94a6;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h1>Overrides</h1>
+          <p>Manage saved customizations by report type. Use View or Edit to see full details.</p>
+        </div>
+        <div style="text-align: right;">
+          <a class="link" href="/">Back to Report Generator</a>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 12px;">
+        <div>
+          <label for="report_type">Report Type</label>
+          <select id="report_type" name="report_type">
+            {% for report in report_types %}
+            <option value="{{ report.key }}" {% if report.key == selected_report %}selected{% endif %}>{{ report.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="actions">
+          <button type="button" id="new_override_btn">New Override</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Override</th>
+              <th>Updated</th>
+              <th>Data (All Attributes) <span class="muted" title="Summary of all override attributes (one per line).">?</span></th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="overrides_table">
+            <tr><td colspan="4" class="muted">No overrides yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="status" class="status"></div>
+    </div>
+  </div>
+
+  <script>
+    const reportTypeSelect = document.getElementById("report_type");
+    const tableBody = document.getElementById("overrides_table");
+    const statusEl = document.getElementById("status");
+
+    function formatAttributes(item) {
+      return `Name: ${item.name || ""}\nVersion: ${item.version || ""}\nPDF: ${item.pdf_engine || ""}\nMode: ${item.report_mode || ""}\nSample: ${item.sample_rows ?? ""}\nPreview: ${item.preview_rows ?? ""}\nDelimiter: ${item.delimiter || ""}\nOverview: ${item.overview_text || ""}\nDescription: ${item.description || ""}\nPrompt: ${item.prompt || ""}`;
+    }
+
+    async function loadOverrides(reportTypeKey) {
+      tableBody.innerHTML = "<tr><td colspan=\"4\" class=\"muted\">Loading...</td></tr>";
+      const response = await fetch(`/report/overrides/details?report_type=${encodeURIComponent(reportTypeKey)}`);
+      if (!response.ok) return;
+      const data = await response.json();
+      if (!data || !data.overrides || data.overrides.length === 0) {
+        tableBody.innerHTML = "<tr><td colspan=\"4\" class=\"muted\">No overrides yet.</td></tr>";
+        return;
+      }
+      tableBody.innerHTML = "";
+      data.overrides.forEach((item) => {
+        const row = document.createElement("tr");
+        const attributes = formatAttributes(item);
+        row.innerHTML = `
+          <td>${item.override_name}</td>
+          <td>${item.updated_at || ""}</td>
+          <td class="ellipsis" title="${attributes}"><pre style="margin:0; white-space: pre-wrap;">${attributes}</pre></td>
+          <td>
+            <a class="link" href="/customize/view?report_type=${encodeURIComponent(reportTypeSelect.value)}&override_name=${encodeURIComponent(item.override_name)}">View</a>
+            <span class="muted"> | </span>
+            <a class="link" href="/customize/edit?report_type=${encodeURIComponent(reportTypeSelect.value)}&override_name=${encodeURIComponent(item.override_name)}">Edit</a>
+            <span class="muted"> | </span>
+            <button type="button" class="ghost" data-delete="${item.override_name}">Delete</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    reportTypeSelect.addEventListener("change", async () => {
+      statusEl.textContent = "";
+      await loadOverrides(reportTypeSelect.value);
+    });
+
+    tableBody.addEventListener("click", async (event) => {
+      const deleteName = event.target.getAttribute("data-delete");
+      if (!deleteName) return;
+      const formData = new FormData();
+      formData.set("report_type", reportTypeSelect.value);
+      formData.set("override_name", deleteName);
+      const response = await fetch("/report/override/delete", {
+        method: "POST",
+        body: formData
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        statusEl.textContent = `Delete failed: ${text}`;
+        statusEl.style.color = "#9e2a2b";
+        return;
+      }
+      statusEl.textContent = "Deleted override.";
+      statusEl.style.color = "#2e6f4e";
+      await loadOverrides(reportTypeSelect.value);
+    });
+
+    loadOverrides(reportTypeSelect.value);
+
+    document.getElementById("new_override_btn").addEventListener("click", () => {
+      const key = reportTypeSelect.value;
+      window.location.href = `/customize/edit?report_type=${encodeURIComponent(key)}`;
+    });
+  </script>
+</body>
+</html>

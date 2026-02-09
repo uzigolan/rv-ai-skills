@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Override View</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #f2f5fb;
+      --ink: #0e1726;
+      --accent: #3a6ee8;
+      --accent-2: #7c3aed;
+      --card: #ffffff;
+      --muted: #5a6472;
+      --line: #e2e8f0;
+    }
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, #ffffff, transparent 40%),
+        radial-gradient(circle at 90% 0%, #dbeafe, transparent 40%),
+        linear-gradient(180deg, #f7f8fc, var(--bg));
+      color: var(--ink);
+    }
+    .wrap {
+      max-width: 900px;
+      margin: 56px auto;
+      padding: 24px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+    }
+    .label {
+      color: var(--muted);
+    }
+    a.link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div style="display:flex; justify-content: space-between; align-items: center; gap: 12px;">
+        <div>
+          <h1>Override View</h1>
+          <div class="label">{{ override_name }}</div>
+        </div>
+        <div>
+          <a class="link" href="/customize">Back to Customize</a>
+        </div>
+      </div>
+
+      <div class="row"><div class="label">Report Type</div><div>{{ report_type }}</div></div>
+      <div class="row"><div class="label">Report Name</div><div>{{ data.name }}</div></div>
+      <div class="row"><div class="label">Version</div><div>{{ data.version }}</div></div>
+      <div class="row"><div class="label">PDF Engine</div><div>{{ data.pdf_engine }}</div></div>
+      <div class="row"><div class="label">Report Mode</div><div>{{ data.report_mode }}</div></div>
+      <div class="row"><div class="label">Sample Rows</div><div>{{ data.sample_rows }}</div></div>
+      <div class="row"><div class="label">Preview Rows</div><div>{{ data.preview_rows }}</div></div>
+      <div class="row"><div class="label">Delimiter</div><div>{{ data.delimiter }}</div></div>
+      <div class="row"><div class="label">Overview Text</div><div>{{ data.overview_text }}</div></div>
+      <div class="row"><div class="label">Description</div><div>{{ data.description }}</div></div>
+      <div class="row"><div class="label">Prompt</div><div><pre>{{ data.prompt }}</pre></div></div>
+      <div class="row"><div class="label">Updated</div><div>{{ data.updated_at }}</div></div>
+    </div>
+  </div>
+</body>
+</html>

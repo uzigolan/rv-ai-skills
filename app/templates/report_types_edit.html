@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Report Type</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #f2f5fb;
+      --ink: #0e1726;
+      --accent: #3a6ee8;
+      --accent-2: #7c3aed;
+      --card: #ffffff;
+      --muted: #5a6472;
+      --line: #e2e8f0;
+    }
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, #ffffff, transparent 40%),
+        radial-gradient(circle at 90% 0%, #dbeafe, transparent 40%),
+        linear-gradient(180deg, #f7f8fc, var(--bg));
+      color: var(--ink);
+    }
+    .wrap {
+      max-width: 1000px;
+      margin: 56px auto;
+      padding: 24px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 14px;
+      color: var(--ink);
+    }
+    textarea {
+      min-height: 140px;
+      resize: vertical;
+    }
+    button {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.25);
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .status {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #2e6f4e;
+    }
+    a.link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div style="display:flex; justify-content: space-between; align-items:center; gap:12px;">
+        <div>
+          <h1>Report Type</h1>
+          <div class="muted">Create or edit a report template.</div>
+        </div>
+        <div>
+          <a class="link" href="/report-types">Back to Report Types</a>
+        </div>
+      </div>
+
+      <form id="report-type-form" method="post">
+        <div class="field">
+          <label for="report_type_key">Key</label>
+          <input id="report_type_key" type="text" name="report_type_key" value="{{ report_type.report_type_key }}" {% if report_type.report_type_key %}readonly{% endif %} required />
+        </div>
+        <div class="field">
+          <label for="report_type">Type Name</label>
+          <input id="report_type" type="text" name="report_type" value="{{ report_type.report_type }}" />
+        </div>
+        <div class="field">
+          <label for="name">Display Name</label>
+          <input id="name" type="text" name="name" value="{{ report_type.name }}" />
+        </div>
+        <div class="field">
+          <label for="version">Version</label>
+          <input id="version" type="text" name="version" value="{{ report_type.version }}" />
+        </div>
+        <div class="field">
+          <label for="pdf_engine">PDF Engine</label>
+          <input id="pdf_engine" type="text" name="pdf_engine" value="{{ report_type.pdf_engine }}" />
+        </div>
+        <div class="field">
+          <label for="report_mode">Report Mode</label>
+          <input id="report_mode" type="text" name="report_mode" value="{{ report_type.report_mode }}" />
+        </div>
+        <div class="field">
+          <label for="sample_rows">Sample Rows</label>
+          <input id="sample_rows" type="number" name="sample_rows" value="{{ report_type.sample_rows }}" />
+        </div>
+        <div class="field">
+          <label for="preview_rows">Preview Rows</label>
+          <input id="preview_rows" type="number" name="preview_rows" value="{{ report_type.preview_rows }}" />
+        </div>
+        <div class="field">
+          <label for="delimiter">Delimiter</label>
+          <input id="delimiter" type="text" name="delimiter" value="{{ report_type.delimiter }}" />
+        </div>
+        <div class="field">
+          <label for="overview_text">Overview Text</label>
+          <input id="overview_text" type="text" name="overview_text" value="{{ report_type.overview_text }}" />
+        </div>
+        <div class="field">
+          <label for="description">Description</label>
+          <input id="description" type="text" name="description" value="{{ report_type.description }}" />
+        </div>
+        <div class="field">
+          <label for="prompt">Prompt</label>
+          <textarea id="prompt" name="prompt">{{ report_type.prompt }}</textarea>
+        </div>
+        <div class="actions">
+          <button type="submit">Save Report Type</button>
+        </div>
+        <div id="status" class="status"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("report-type-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const statusEl = document.getElementById("status");
+      statusEl.textContent = "";
+      const formData = new FormData(event.target);
+      const response = await fetch("/report-types/save", {
+        method: "POST",
+        body: formData
+      });
+      if (!response.ok) {
+        statusEl.textContent = `Save failed: ${await response.text()}`;
+        statusEl.style.color = "#9e2a2b";
+        return;
+      }
+      statusEl.textContent = "Saved.";
+      statusEl.style.color = "#2e6f4e";
+      if (!document.getElementById("report_type_key").readOnly) {
+        window.location.href = `/report-types/edit?report_type=${encodeURIComponent(formData.get("report_type_key"))}`;
+      }
+    });
+  </script>
+</body>
+</html>

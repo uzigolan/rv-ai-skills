@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Report Types</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #f2f5fb;
+      --ink: #0e1726;
+      --accent: #3a6ee8;
+      --accent-2: #7c3aed;
+      --card: #ffffff;
+      --muted: #5a6472;
+      --line: #e2e8f0;
+    }
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, #ffffff, transparent 40%),
+        radial-gradient(circle at 90% 0%, #dbeafe, transparent 40%),
+        linear-gradient(180deg, #f7f8fc, var(--bg));
+      color: var(--ink);
+    }
+    .wrap {
+      max-width: 1200px;
+      margin: 56px auto;
+      padding: 24px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 30px;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    a.link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+    }
+    button {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.25);
+    }
+    button.ghost {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      box-shadow: none;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 18px;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      padding: 8px 10px;
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .muted {
+      color: #8a94a6;
+      font-size: 12px;
+    }
+    .ellipsis {
+      max-width: 260px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h1>Report Types</h1>
+          <div class="muted">Manage report type templates stored in the DB.</div>
+        </div>
+        <div class="row">
+          <a class="link" href="/">Back to Report Generator</a>
+          <a class="link" href="/report-types/edit"><button type="button">Add Report Type</button></a>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Name</th>
+            <th>Version</th>
+            <th>Mode</th>
+            <th>PDF</th>
+            <th>Sample</th>
+            <th>Preview</th>
+            <th>Delimiter</th>
+            <th>Overview</th>
+            <th>Description</th>
+            <th>Prompt</th>
+            <th>Updated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if report_types %}
+            {% for rt in report_types %}
+            <tr>
+              <td>{{ rt.report_type_key }}</td>
+              <td>{{ rt.name }}</td>
+              <td>{{ rt.version }}</td>
+              <td>{{ rt.report_mode }}</td>
+              <td>{{ rt.pdf_engine }}</td>
+              <td>{{ rt.sample_rows }}</td>
+              <td>{{ rt.preview_rows }}</td>
+              <td>{{ rt.delimiter }}</td>
+              <td style="white-space: pre-wrap;">{{ rt.overview_text }}</td>
+              <td style="white-space: pre-wrap;">{{ rt.description }}</td>
+              <td style="white-space: pre-wrap;">{{ rt.prompt }}</td>
+              <td>{{ rt.updated_at }}</td>
+              <td>
+                <a class="link" href="/report-types/edit?report_type={{ rt.report_type_key }}">Edit</a>
+                <span class="muted"> | </span>
+                <button type="button" class="ghost" data-delete="{{ rt.report_type_key }}">Delete</button>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="13" class="muted">No report types found.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll("button[data-delete]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const key = btn.getAttribute("data-delete");
+        const formData = new FormData();
+        formData.set("report_type_key", key);
+        const response = await fetch("/report-types/delete", {
+          method: "POST",
+          body: formData
+        });
+        if (response.ok) {
+          window.location.reload();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -11,6 +11,11 @@ __pycache__/
 
 # Local outputs
 output/
+output/html/
+output/pdf/
+logs/
+db/
+db/provider_keys.key
 
 # OS
 .DS_Store
