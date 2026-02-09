@@ -52,5 +52,8 @@ def _fernet_unprotect(ciphertext: str, key_path: Path) -> str:
 
     key = _load_or_create_key(key_path)
     f = Fernet(key)
-    data = f.decrypt(ciphertext.encode("ascii"))
-    return data.decode("utf-8")
+    try:
+        data = f.decrypt(ciphertext.encode("ascii"))
+        return data.decode("utf-8")
+    except Exception:
+        return ""

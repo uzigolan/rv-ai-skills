@@ -55,6 +55,28 @@ python scripts/set_provider_key.py --provider openai --api-key YOUR_KEY
 
 Supported providers: `openai`, `grok`, `claude`, `gemini`.
 
+### If you cloned from Git (Linux/macOS)
+
+The DB may contain keys encrypted on another machine. If startup fails or keys don’t work:
+
+```bash
+rm -f db/provider_keys.key
+
+python - <<'PY'
+import sqlite3
+conn = sqlite3.connect('db/report_overrides.db')
+conn.execute("UPDATE providers SET api_key_enc = NULL")
+conn.commit()
+conn.close()
+PY
+```
+
+Then set your local key again:
+
+```bash
+python scripts/set_provider_key.py --provider openai --api-key YOUR_KEY
+```
+
 ## Run
 
 ```bash
