@@ -1,22 +1,7 @@
-# Python
-__pycache__/
-*.pyc
-.venv/
-
-# Env
+config.ini
 .env
-
-# Sandbox
-.sandbox/
-
-# Local outputs
+logs/
 output/
 output/html/
 output/pdf/
-logs/
-db/
 db/provider_keys.key
-
-# OS
-.DS_Store
-Thumbs.db
