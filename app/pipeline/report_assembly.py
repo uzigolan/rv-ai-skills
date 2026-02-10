@@ -31,6 +31,9 @@ def build_report_context(
     data_file_name: str | None = None,
     report_version: str | None = None,
     cost_estimates: list[Any] | None = None,
+    executive_summary: str | None = None,
+    twamp_stats: dict[str, Any] | None = None,
+    snmp_stats: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     parsed_insights = _parse_insights(openai_insights)
     for section in parsed_insights:
@@ -44,7 +47,7 @@ def build_report_context(
         "secondary_sections": secondary_sections,
         "preview_html": preview_html,
         "report_type": report_type,
-        "queue_stats": queue_stats or {},
+        "queue_stats": queue_stats,
         "provider_status": provider_status or {},
         "overview_text": overview_text or "",
         "report_title": report_title or "",
@@ -52,6 +55,9 @@ def build_report_context(
         "data_file_name": data_file_name or "",
         "report_version": report_version or "",
         "cost_estimates": cost_estimates or [],
+        "executive_summary": executive_summary or "",
+        "twamp_stats": twamp_stats or {},
+        "snmp_stats": snmp_stats or {},
     }
 
 

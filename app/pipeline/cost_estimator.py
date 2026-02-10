@@ -27,13 +27,14 @@ def estimate_report_costs(
     summary: dict[str, Any],
     sample_rows: list[dict[str, Any]],
     queue_stats: dict[str, Any] | None = None,
+    analysis_data: dict[str, Any] | None = None,
 ) -> list[CostEstimate]:
     estimates: list[CostEstimate] = []
     chars_per_token = 4
 
     # OpenAI insights
     if config.ai_sections.openai.enabled:
-        prompt = build_openai_prompt(report, summary, sample_rows, queue_stats)
+        prompt = build_openai_prompt(report, summary, sample_rows, queue_stats, analysis_data)
         input_tokens = _estimate_tokens(prompt, chars_per_token)
         output_tokens = 800
         estimates.append(

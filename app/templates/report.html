@@ -310,8 +310,11 @@
 </head>
 <body>
   <div class="wrap">
+    {% set is_queue = report_type.startswith("queues_statistics") %}
+    {% set is_twamp = report_type == "twamp_statistics" %}
+    {% set is_snmp = report_type == "snmp_performance" %}
     <h1>{{ report_title }}</h1>
-    <div class="meta">Version {{ report_version }} · Generated {{ generated_at }} from data file {{ data_file_name }}</div>
+    <div class="meta">Version {{ report_version }} - Generated {{ generated_at }} from data file {{ data_file_name }}</div>
 
     <div class="hero">
       <div>
@@ -327,7 +330,7 @@
 
     <div class="section">
       <h2>Executive Summary</h2>
-      <div class="callout">{{ queue_stats.conclusion }}</div>
+      <div class="callout">{{ executive_summary }}</div>
     </div>
 
     <div class="section">
@@ -387,10 +390,11 @@
           {% endfor %}
         </tbody>
       </table>
-      <div class="cost-note">Estimates use configured per‑token rates and approximate token counts.</div>
+      <div class="cost-note">Estimates use configured per-token rates and approximate token counts.</div>
     </div>
     {% endif %}
 
+    {% if is_queue %}
     <div class="section">
       <h2>Queue Statistics</h2>
       <div class="summary-grid">
@@ -535,7 +539,7 @@
             </div>
           </div>
           <div class="insight-row">
-            <div class="icon-circle">⌁</div>
+            <div class="icon-circle">T</div>
             <div>
               <div class="insight-title">Total Dropped Frames</div>
               <div class="insight-value">{{ queue_stats.trend.total_dropped_frames }}</div>
@@ -659,7 +663,7 @@
 
     <div class="section">
       <h2>Operational Implications</h2>
-      <div class="callout">{{ queue_stats.conclusion }}</div>
+      <div class="callout">{{ executive_summary }}</div>
     </div>
 
     {% if queue_stats.recommendations %}
@@ -675,8 +679,168 @@
 
     <div class="section">
       <h2>Conclusion</h2>
-      <div class="callout">{{ queue_stats.conclusion }}</div>
+      <div class="callout">{{ executive_summary }}</div>
     </div>
+    {% endif %}
+
+    {% if is_twamp %}
+    <div class="section">
+      <h2>KPI Snapshot</h2>
+      <table class="dataframe">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Value</th>
+            <th>Interpretation</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in twamp_stats.kpi_rows %}
+          <tr>
+            <td>{{ row.label }}</td>
+            <td>{{ row.value }}</td>
+            <td>{{ row.note }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>Trend Snapshot</h2>
+      <div class="section-subtitle">Discard and yellow traffic over the measurement window.</div>
+      <table class="dataframe">
+        <thead>
+          <tr>
+            <th>Elapsed (s)</th>
+            <th>Discard Rate (%)</th>
+            <th>Yellow Traffic (%)</th>
+            <th>Forwarded Packets</th>
+            <th>Discarded Packets</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in twamp_stats.trend_rows %}
+          <tr>
+            <td>{{ row.elapsed }}</td>
+            <td>{{ "%.3f"|format(row.discard_rate) }}</td>
+            <td>{{ "%.3f"|format(row.yellow_pct) }}</td>
+            <td>{{ row.forwarded }}</td>
+            <td>{{ row.discards }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>Network Operations (Troubleshooting)</h2>
+      <ul>
+        {% for item in twamp_stats.operations_notes %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Service Provider Sales (Upsell)</h2>
+      <ul>
+        {% for item in twamp_stats.sales_notes %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>End Customer (Self-Analysis)</h2>
+      <ul>
+        {% for item in twamp_stats.customer_notes %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if is_snmp %}
+    <div class="section">
+      <h2>KPI Snapshot</h2>
+      <table class="dataframe">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Value</th>
+            <th>Interpretation</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in snmp_stats.kpi_rows %}
+          <tr>
+            <td>{{ row.label }}</td>
+            <td>{{ row.value }}</td>
+            <td>{{ row.note }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="callout">{{ snmp_stats.twamp_summary }}</div>
+    </div>
+
+    <div class="section">
+      <h2>Microburst Stress Trends</h2>
+      <div class="section-subtitle">Yellow + red bytes per second (proxy for microburst stress).</div>
+      <table class="dataframe">
+        <thead>
+          <tr>
+            <th>Time (UTC)</th>
+            <th>Discard Rate (%)</th>
+            <th>Yellow Traffic (%)</th>
+            <th>Microburst Stress (B/s)</th>
+            <th>Forwarded Packets</th>
+            <th>Discarded Packets</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in snmp_stats.microburst_rows %}
+          <tr>
+            <td>{{ row.time }}</td>
+            <td>{{ "%.3f"|format(row.discard_rate) }}</td>
+            <td>{{ "%.3f"|format(row.yellow_pct) }}</td>
+            <td>{{ "%.0f"|format(row.microburst_bps) }}</td>
+            <td>{{ row.forwarded_packets }}</td>
+            <td>{{ row.discarded_packets }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>Network Operations (Troubleshooting)</h2>
+      <ul>
+        {% for item in snmp_stats.operations_notes %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Service Provider Sales (Upsell)</h2>
+      <ul>
+        {% for item in snmp_stats.sales_notes %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>End Customer (Self-Analysis)</h2>
+      <ul>
+        {% for item in snmp_stats.customer_notes %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
 
     <div class="section">
       <h2>Appendix</h2>
@@ -709,3 +873,5 @@
   </div>
 </body>
 </html>
+
+

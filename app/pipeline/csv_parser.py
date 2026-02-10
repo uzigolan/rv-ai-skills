@@ -17,7 +17,7 @@ def parse_csv(
 ) -> tuple[pd.DataFrame, dict[str, Any], list[dict[str, Any]], str]:
     try:
         buffer = BytesIO(file_bytes)
-        df = pd.read_csv(buffer)
+        df = _read_csv_smart(buffer)
     except Exception as exc:  # noqa: BLE001
         raise CsvParseError(f"Failed to parse CSV: {exc}") from exc
 
@@ -44,3 +44,24 @@ def parse_csv(
     preview_html = df.head(preview_rows).to_html(index=False, classes="dataframe", border=0)
 
     return df, summary, sample_rows_data, preview_html
+
+
+def _read_csv_smart(buffer: BytesIO) -> pd.DataFrame:
+    content = buffer.getvalue().decode("utf-8", errors="ignore")
+    lines = content.splitlines()
+    for idx, line in enumerate(lines[:10]):
+        if line.strip().startswith("Version") or line.strip().startswith("Interval State"):
+            start = _find_header_line(lines)
+            if start is not None:
+                csv_text = "\n".join(lines[start:])
+                return pd.read_csv(BytesIO(csv_text.encode("utf-8")))
+            break
+    buffer.seek(0)
+    return pd.read_csv(buffer)
+
+
+def _find_header_line(lines: list[str]) -> int | None:
+    for idx, line in enumerate(lines):
+        if line.strip().startswith("Table Name,Entry OID"):
+            return idx
+    return None

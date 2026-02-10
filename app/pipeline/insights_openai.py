@@ -13,13 +13,14 @@ def get_openai_insights(
     summary: dict[str, Any],
     sample_rows: list[dict[str, Any]],
     queue_stats: dict[str, Any] | None = None,
+    analysis_data: dict[str, Any] | None = None,
 ) -> str:
     if not provider.api_key:
         return "OpenAI API key not configured."
 
     client = OpenAI(api_key=provider.api_key)
 
-    prompt = build_openai_prompt(report, summary, sample_rows, queue_stats)
+    prompt = build_openai_prompt(report, summary, sample_rows, queue_stats, analysis_data)
 
     try:
         response = client.responses.create(
@@ -39,6 +40,7 @@ def build_openai_prompt(
     summary: dict[str, Any],
     sample_rows: list[dict[str, Any]],
     queue_stats: dict[str, Any] | None = None,
+    analysis_data: dict[str, Any] | None = None,
 ) -> str:
     delimiter = report.delimiter.strip() or "###"
     default_prompt = (
@@ -49,13 +51,16 @@ def build_openai_prompt(
         "on the same line, then the section content on following lines.\n\n"
         "Summary: {summary}\n\n"
         "Queue Statistics: {queue_stats}\n\n"
+        "Analysis: {analysis}\n\n"
         "Sample rows: {sample_rows}\n"
     )
     prompt_template = report.prompt.strip() if report.prompt.strip() else default_prompt
     return prompt_template.format(
         summary=summary,
         queue_stats=queue_stats,
+        analysis=analysis_data or {},
         sample_rows=sample_rows,
+        delimiter=delimiter,
     )
 
 

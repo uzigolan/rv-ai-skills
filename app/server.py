@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 
 from flask import Flask, Response, render_template, request, send_file
 
@@ -23,13 +24,16 @@ from app.db_overrides import (
     get_report_type,
     save_report_type,
     delete_report_type,
+    get_provider_api_key,
 )
 from app.pipeline.csv_parser import CsvParseError, parse_csv
 from app.pipeline.cost_estimator import estimate_report_costs
 from app.pipeline.insights_openai import get_openai_insights
 from app.pipeline.queues_statistics import analyze_queues_statistics
+from app.pipeline.snmp_performance import parse_snmp_performance_csv, analyze_snmp_performance
 from app.pipeline.report_assembly import build_report_context, render_report_html
 from app.pipeline.sections_ai import get_ai_sections
+from app.pipeline.twamp_statistics import analyze_twamp_statistics
 
 
 def create_app(config: AppConfig) -> Flask:
@@ -305,6 +309,7 @@ def create_app(config: AppConfig) -> Flask:
     @app.post("/report")
     def report_html() -> Response:
         config = app.config["APP_CONFIG"]
+        _refresh_provider_keys(config)
         report_config = _get_report_config(
             config,
             request.form.get("report_type"),
@@ -323,10 +328,10 @@ def create_app(config: AppConfig) -> Flask:
             return Response("Missing csv_file.", status=400)
 
         try:
-            df, summary, sample_rows, preview_html = parse_csv(
+            result = _analyze_report_data(
+                config,
+                report_config,
                 file.read(),
-                sample_rows=report_config.sample_rows,
-                preview_rows=report_config.preview_rows,
             )
         except CsvParseError as exc:
             return Response(str(exc), status=400)
@@ -334,43 +339,33 @@ def create_app(config: AppConfig) -> Flask:
         report_name = report_config.name
         file_name = file.filename or "CSV"
         title = f"{report_name} Report - {file_name}"
-        queue_stats = analyze_queues_statistics(
-            df,
-            abnormal_drop_rate_threshold=config.analysis.abnormal_drop_rate_threshold,
-            top_n_queues=config.analysis.top_n_queues,
-            time_bucket_minutes=config.analysis.time_bucket_minutes,
-            include_trend_chart=config.analysis.include_trend_chart,
-            enable_outliers=config.analysis.enable_outliers,
-            enable_percentiles=config.analysis.enable_percentiles,
-            enable_correlations=config.analysis.enable_correlations,
-            enable_conclusion=config.analysis.enable_conclusion,
-            enable_recommendations=config.analysis.enable_recommendations,
-            outlier_method=config.analysis.outlier_method,
-            per_queue_timeseries=config.analysis.per_queue_timeseries,
-            severity_thresholds=config.analysis.severity_thresholds,
-        )
+        queue_stats = result.get("queue_stats")
+        twamp_stats = result.get("twamp_stats")
+        snmp_stats = result.get("snmp_stats")
         openai_insights = get_openai_insights(
             report_config,
             config.ai_sections.openai,
-            summary,
-            sample_rows,
+            result["summary"],
+            result["sample_rows"],
             queue_stats,
+            result.get("analysis_payload"),
         )
-        secondary_sections = get_ai_sections(config.ai_sections, summary)
+        secondary_sections = get_ai_sections(config.ai_sections, result["summary"])
         cost_estimates = estimate_report_costs(
             config,
             report_config,
-            summary,
-            sample_rows,
+            result["summary"],
+            result["sample_rows"],
             queue_stats,
+            result.get("analysis_payload"),
         )
 
         context = build_report_context(
             title=title,
-            summary=summary,
+            summary=result["summary"],
             openai_insights=openai_insights,
             secondary_sections=secondary_sections,
-            preview_html=preview_html,
+            preview_html=result["preview_html"],
             report_type=report_config.report_type,
             queue_stats=queue_stats,
             provider_status=_provider_status(config),
@@ -380,6 +375,9 @@ def create_app(config: AppConfig) -> Flask:
             data_file_name=file_name,
             report_version=report_config.version,
             cost_estimates=cost_estimates,
+            executive_summary=result.get("executive_summary", ""),
+            twamp_stats=twamp_stats,
+            snmp_stats=snmp_stats,
         )
 
         template_path = template_dir / "report.html"
@@ -389,6 +387,7 @@ def create_app(config: AppConfig) -> Flask:
     @app.post("/report/html")
     def report_html_download() -> Response:
         config = app.config["APP_CONFIG"]
+        _refresh_provider_keys(config)
         report_config = _get_report_config(
             config,
             request.form.get("report_type"),
@@ -407,10 +406,10 @@ def create_app(config: AppConfig) -> Flask:
             return Response("Missing csv_file.", status=400)
 
         try:
-            df, summary, sample_rows, preview_html = parse_csv(
+            result = _analyze_report_data(
+                config,
+                report_config,
                 file.read(),
-                sample_rows=report_config.sample_rows,
-                preview_rows=report_config.preview_rows,
             )
         except CsvParseError as exc:
             return Response(str(exc), status=400)
@@ -418,43 +417,33 @@ def create_app(config: AppConfig) -> Flask:
         report_name = report_config.name
         file_name = file.filename or "CSV"
         title = f"{report_name} Report - {file_name}"
-        queue_stats = analyze_queues_statistics(
-            df,
-            abnormal_drop_rate_threshold=config.analysis.abnormal_drop_rate_threshold,
-            top_n_queues=config.analysis.top_n_queues,
-            time_bucket_minutes=config.analysis.time_bucket_minutes,
-            include_trend_chart=config.analysis.include_trend_chart,
-            enable_outliers=config.analysis.enable_outliers,
-            enable_percentiles=config.analysis.enable_percentiles,
-            enable_correlations=config.analysis.enable_correlations,
-            enable_conclusion=config.analysis.enable_conclusion,
-            enable_recommendations=config.analysis.enable_recommendations,
-            outlier_method=config.analysis.outlier_method,
-            per_queue_timeseries=config.analysis.per_queue_timeseries,
-            severity_thresholds=config.analysis.severity_thresholds,
-        )
+        queue_stats = result.get("queue_stats")
+        twamp_stats = result.get("twamp_stats")
+        snmp_stats = result.get("snmp_stats")
         openai_insights = get_openai_insights(
             report_config,
             config.ai_sections.openai,
-            summary,
-            sample_rows,
+            result["summary"],
+            result["sample_rows"],
             queue_stats,
+            result.get("analysis_payload"),
         )
-        secondary_sections = get_ai_sections(config.ai_sections, summary)
+        secondary_sections = get_ai_sections(config.ai_sections, result["summary"])
         cost_estimates = estimate_report_costs(
             config,
             report_config,
-            summary,
-            sample_rows,
+            result["summary"],
+            result["sample_rows"],
             queue_stats,
+            result.get("analysis_payload"),
         )
 
         context = build_report_context(
             title=title,
-            summary=summary,
+            summary=result["summary"],
             openai_insights=openai_insights,
             secondary_sections=secondary_sections,
-            preview_html=preview_html,
+            preview_html=result["preview_html"],
             report_type=report_config.report_type,
             queue_stats=queue_stats,
             provider_status=_provider_status(config),
@@ -464,6 +453,9 @@ def create_app(config: AppConfig) -> Flask:
             data_file_name=file_name,
             report_version=report_config.version,
             cost_estimates=cost_estimates,
+            executive_summary=result.get("executive_summary", ""),
+            twamp_stats=twamp_stats,
+            snmp_stats=snmp_stats,
         )
 
         template_path = template_dir / "report.html"
@@ -480,6 +472,7 @@ def create_app(config: AppConfig) -> Flask:
     @app.post("/report/pdf")
     def report_pdf() -> Response:
         config = app.config["APP_CONFIG"]
+        _refresh_provider_keys(config)
         report_config = _get_report_config(
             config,
             request.form.get("report_type"),
@@ -498,10 +491,10 @@ def create_app(config: AppConfig) -> Flask:
             return Response("Missing csv_file.", status=400)
 
         try:
-            df, summary, sample_rows, preview_html = parse_csv(
+            result = _analyze_report_data(
+                config,
+                report_config,
                 file.read(),
-                sample_rows=report_config.sample_rows,
-                preview_rows=report_config.preview_rows,
             )
         except CsvParseError as exc:
             return Response(str(exc), status=400)
@@ -509,43 +502,33 @@ def create_app(config: AppConfig) -> Flask:
         report_name = report_config.name
         file_name = file.filename or "CSV"
         title = f"{report_name} Report - {file_name}"
-        queue_stats = analyze_queues_statistics(
-            df,
-            abnormal_drop_rate_threshold=config.analysis.abnormal_drop_rate_threshold,
-            top_n_queues=config.analysis.top_n_queues,
-            time_bucket_minutes=config.analysis.time_bucket_minutes,
-            include_trend_chart=config.analysis.include_trend_chart,
-            enable_outliers=config.analysis.enable_outliers,
-            enable_percentiles=config.analysis.enable_percentiles,
-            enable_correlations=config.analysis.enable_correlations,
-            enable_conclusion=config.analysis.enable_conclusion,
-            enable_recommendations=config.analysis.enable_recommendations,
-            outlier_method=config.analysis.outlier_method,
-            per_queue_timeseries=config.analysis.per_queue_timeseries,
-            severity_thresholds=config.analysis.severity_thresholds,
-        )
+        queue_stats = result.get("queue_stats")
+        twamp_stats = result.get("twamp_stats")
+        snmp_stats = result.get("snmp_stats")
         openai_insights = get_openai_insights(
             report_config,
             config.ai_sections.openai,
-            summary,
-            sample_rows,
+            result["summary"],
+            result["sample_rows"],
             queue_stats,
+            result.get("analysis_payload"),
         )
-        secondary_sections = get_ai_sections(config.ai_sections, summary)
+        secondary_sections = get_ai_sections(config.ai_sections, result["summary"])
         cost_estimates = estimate_report_costs(
             config,
             report_config,
-            summary,
-            sample_rows,
+            result["summary"],
+            result["sample_rows"],
             queue_stats,
+            result.get("analysis_payload"),
         )
 
         context = build_report_context(
             title=title,
-            summary=summary,
+            summary=result["summary"],
             openai_insights=openai_insights,
             secondary_sections=secondary_sections,
-            preview_html=preview_html,
+            preview_html=result["preview_html"],
             report_type=report_config.report_type,
             queue_stats=queue_stats,
             provider_status=_provider_status(config),
@@ -555,6 +538,9 @@ def create_app(config: AppConfig) -> Flask:
             data_file_name=file_name,
             report_version=report_config.version,
             cost_estimates=cost_estimates,
+            executive_summary=result.get("executive_summary", ""),
+            twamp_stats=twamp_stats,
+            snmp_stats=snmp_stats,
         )
 
         template_path = template_dir / "report.html"
@@ -591,36 +577,21 @@ def create_app(config: AppConfig) -> Flask:
             return Response("Missing csv_file.", status=400)
 
         try:
-            df, summary, sample_rows, _preview_html = parse_csv(
+            result = _analyze_report_data(
+                config,
+                report_config,
                 file.read(),
-                sample_rows=report_config.sample_rows,
-                preview_rows=report_config.preview_rows,
             )
         except CsvParseError as exc:
             return Response(str(exc), status=400)
 
-        queue_stats = analyze_queues_statistics(
-            df,
-            abnormal_drop_rate_threshold=config.analysis.abnormal_drop_rate_threshold,
-            top_n_queues=config.analysis.top_n_queues,
-            time_bucket_minutes=config.analysis.time_bucket_minutes,
-            include_trend_chart=config.analysis.include_trend_chart,
-            enable_outliers=config.analysis.enable_outliers,
-            enable_percentiles=config.analysis.enable_percentiles,
-            enable_correlations=config.analysis.enable_correlations,
-            enable_conclusion=config.analysis.enable_conclusion,
-            enable_recommendations=config.analysis.enable_recommendations,
-            outlier_method=config.analysis.outlier_method,
-            per_queue_timeseries=config.analysis.per_queue_timeseries,
-            severity_thresholds=config.analysis.severity_thresholds,
-        )
-
         cost_estimates = estimate_report_costs(
             config,
             report_config,
-            summary,
-            sample_rows,
-            queue_stats,
+            result["summary"],
+            result["sample_rows"],
+            result.get("queue_stats"),
+            result.get("analysis_payload"),
         )
 
         return Response(
@@ -751,6 +722,89 @@ def _missing_provider_keys(config: AppConfig) -> list[str]:
     if config.ai_sections.gemini.enabled and not config.ai_sections.gemini.api_key:
         missing.append("Gemini")
     return missing
+
+
+def _refresh_provider_keys(config: AppConfig) -> None:
+    config.ai_sections.openai.api_key = get_provider_api_key(config.database.path, "openai") or ""
+    config.ai_sections.grok.api_key = get_provider_api_key(config.database.path, "grok") or ""
+    config.ai_sections.claude.api_key = get_provider_api_key(config.database.path, "claude") or ""
+    config.ai_sections.gemini.api_key = get_provider_api_key(config.database.path, "gemini") or ""
+
+
+def _analyze_report_data(
+    config: AppConfig,
+    report_config: "ReportConfig",
+    file_bytes: bytes,
+) -> dict[str, Any]:
+    report_key = report_config.report_type_key
+    if report_key == "twamp_statistics":
+        df, summary, sample_rows, preview_html = parse_csv(
+            file_bytes,
+            sample_rows=report_config.sample_rows,
+            preview_rows=report_config.preview_rows,
+        )
+        twamp_stats = analyze_twamp_statistics(df)
+        return {
+            "summary": summary,
+            "sample_rows": sample_rows,
+            "preview_html": preview_html,
+            "queue_stats": None,
+            "twamp_stats": twamp_stats,
+            "snmp_stats": None,
+            "analysis_payload": twamp_stats,
+            "executive_summary": twamp_stats.get("executive_summary", ""),
+        }
+    if report_key == "snmp_performance":
+        try:
+            parsed = parse_snmp_performance_csv(
+                file_bytes,
+                sample_rows=report_config.sample_rows,
+                preview_rows=report_config.preview_rows,
+            )
+        except Exception as exc:  # noqa: BLE001
+            raise CsvParseError(f"Failed to parse SNMP CSV: {exc}") from exc
+        snmp_stats = analyze_snmp_performance(parsed.service_df, parsed.twamp_df)
+        return {
+            "summary": parsed.summary,
+            "sample_rows": parsed.sample_rows,
+            "preview_html": parsed.preview_html,
+            "queue_stats": None,
+            "twamp_stats": None,
+            "snmp_stats": snmp_stats,
+            "analysis_payload": snmp_stats,
+            "executive_summary": snmp_stats.get("executive_summary", ""),
+        }
+
+    df, summary, sample_rows, preview_html = parse_csv(
+        file_bytes,
+        sample_rows=report_config.sample_rows,
+        preview_rows=report_config.preview_rows,
+    )
+    queue_stats = analyze_queues_statistics(
+        df,
+        abnormal_drop_rate_threshold=config.analysis.abnormal_drop_rate_threshold,
+        top_n_queues=config.analysis.top_n_queues,
+        time_bucket_minutes=config.analysis.time_bucket_minutes,
+        include_trend_chart=config.analysis.include_trend_chart,
+        enable_outliers=config.analysis.enable_outliers,
+        enable_percentiles=config.analysis.enable_percentiles,
+        enable_correlations=config.analysis.enable_correlations,
+        enable_conclusion=config.analysis.enable_conclusion,
+        enable_recommendations=config.analysis.enable_recommendations,
+        outlier_method=config.analysis.outlier_method,
+        per_queue_timeseries=config.analysis.per_queue_timeseries,
+        severity_thresholds=config.analysis.severity_thresholds,
+    )
+    return {
+        "summary": summary,
+        "sample_rows": sample_rows,
+        "preview_html": preview_html,
+        "queue_stats": queue_stats,
+        "twamp_stats": None,
+        "snmp_stats": None,
+        "analysis_payload": queue_stats,
+        "executive_summary": queue_stats.get("conclusion", ""),
+    }
 
 
 if __name__ == "__main__":
