@@ -80,7 +80,7 @@ python scripts/set_provider_key.py --provider openai --api-key YOUR_KEY
 ## Run
 
 ```bash
-python app/server.py --config config.ini
+PYTHONPATH=. python app/server.py --config config.ini
 ```
 
 Open in browser:
